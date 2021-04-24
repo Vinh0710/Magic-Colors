@@ -1,0 +1,543 @@
+﻿#include "fps.h"
+using namespace std;
+
+const int SCREEN_WIDTH = 1096;
+const int SCREEN_HEIGHT = 562;
+
+bool init();
+void close();
+bool load();
+SDL_Texture* loadFromRenderedText(std::string textureText, SDL_Color textColor, SDL_Rect& rect);
+SDL_Texture* loadTexture(char* path);
+void render(int index, SDL_Rect& rect);
+SDL_Rect rectFont = { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 60, 20 };
+SDL_Renderer* gRenderer = NULL;
+SDL_Window* gWindow = NULL;
+_TTF_Font* front = NULL;
+SDL_Texture* gTexture = NULL;
+SDL_Texture* background = NULL;
+SDL_Texture* color[15];
+SDL_Texture* text[3];
+SDL_Texture* menu = NULL;
+Mix_Chunk* jump = NULL;
+Mix_Chunk* score = NULL;
+SDL_Texture* anSwer = NULL;
+SDL_Event gevent;
+Mix_Music* Music = NULL;
+SDL_Rect menuText[3];
+SDL_Color black = { 0,0,0 };
+SDL_Color red = { 255,0,0 };
+SDL_Color white = { 255,255,255 };
+bool init()
+{
+    //Initialization flag
+    bool success = true;
+
+    //Initialize SDL
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+    {
+        printf("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
+        success = false;
+    }
+    else
+    {
+        //Set texture filtering to linear
+        if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
+        {
+            printf("Warning: Linear texture filtering not enabled!");
+        }
+
+        //Create window
+        gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+        if (gWindow == NULL)
+        {
+            printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
+            success = false;
+        }
+        else
+        {
+            //Create vsynced renderer for window
+            gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+            if (gRenderer == NULL)
+            {
+                printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
+                success = false;
+            }
+            else
+            {
+                //Initialize renderer color
+                SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+
+                //Initialize PNG loading
+                int imgFlags = IMG_INIT_PNG;
+                if (!(IMG_Init(imgFlags) & imgFlags))
+                {
+                    printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+                    success = false;
+                }
+
+                //Initialize SDL_mixer
+                if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+                {
+                    printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+                    success = false;
+                }
+                if (TTF_Init() == -1)
+                {
+                    printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+                    success = false;
+                }
+            }
+        }
+    }
+
+    return success;
+}
+void render(int index, SDL_Rect& rect) {
+    switch (index) {
+    case  1:  SDL_RenderCopy(gRenderer, color[1], NULL, &rect); break;
+    case  2:  SDL_RenderCopy(gRenderer, color[2], NULL, &rect); break;
+    case  3:  SDL_RenderCopy(gRenderer, color[3], NULL, &rect); break;
+    case  4:  SDL_RenderCopy(gRenderer, color[4], NULL, &rect); break;
+    case  5:  SDL_RenderCopy(gRenderer, color[5], NULL, &rect); break;
+    case  6:  SDL_RenderCopy(gRenderer, color[6], NULL, &rect); break;
+    case  7:  SDL_RenderCopy(gRenderer, color[7], NULL, &rect); break;
+    case -1:  SDL_RenderCopy(gRenderer, color[8], NULL, &rect); break;
+    case -2:  SDL_RenderCopy(gRenderer, color[9], NULL, &rect); break;
+    case -3: SDL_RenderCopy(gRenderer, color[10], NULL, &rect); break;
+    case -4: SDL_RenderCopy(gRenderer, color[11], NULL, &rect); break;
+    case -5: SDL_RenderCopy(gRenderer, color[12], NULL, &rect); break;
+    case -6: SDL_RenderCopy(gRenderer, color[13], NULL, &rect); break;
+    case -7: SDL_RenderCopy(gRenderer, color[14], NULL, &rect); break;
+    default: break;
+    }
+}
+SDL_Texture* loadTexture(char* path)
+{
+    SDL_Texture* newTexture = NULL;
+    SDL_Surface* loadedSurface = IMG_Load(path);
+    if (loadedSurface != NULL)
+    {
+        SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0, 255, 255));// made nền trong suất
+        newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+        if (newTexture == NULL)
+        {
+            printf("Unable to create texture from %s! SDL Error: %s\n", path, SDL_GetError());
+        }
+        SDL_FreeSurface(loadedSurface);
+    }
+    return newTexture;
+}
+void close()
+{
+    SDL_DestroyTexture(gTexture);
+    gTexture = NULL;
+    SDL_DestroyRenderer(gRenderer);
+    SDL_DestroyWindow(gWindow);
+    gWindow = NULL;
+    gRenderer = NULL;
+    
+    TTF_Quit;
+    Mix_Quit;
+    SDL_QUIT;
+}
+bool load()
+{
+    bool success = true;
+    char a[] = "vinh.png";
+    char b[] = "background.png";
+    char c[] = "menu.png";
+    menu = loadTexture(c);
+    gTexture = loadTexture(a);
+    background = loadTexture(b);
+    for (int i = 1; i < 8; i++) {
+        char a[16];
+        sprintf_s(a, "color%d.png", i);
+        color[i] = loadTexture(a);
+    }
+    for (int i = 1; i < 8; i++) {
+        char a[16];
+        sprintf_s(a, "-color%d.png", i);
+        color[i + 7] = loadTexture(a);
+    }
+    if (gTexture == NULL || background == NULL)
+    {
+        printf("canot open images");
+        success = false;
+    }
+    Music = Mix_LoadMUS("beat.wav");
+    jump = Mix_LoadWAV("high.wav");
+    score = Mix_LoadWAV("ting.wav");
+    front = TTF_OpenFont("ARCADE.ttf", 70);
+    return success;
+}
+bool checkMapRight(int a[][18], int b, int c) {
+    if (a[b][c + 1] == 0) return false;
+    return true;
+}
+bool checkMapLeft(int a[][18], int b, int c) {
+    if (a[b][c - 1] == 0) return false;
+    return true;
+}
+bool checkMapUp(int a[][18], int b, int c) {
+    if (a[b - 1][c] == 0) return false;
+    return true;
+}
+bool checkMapDown(int a[][18], int b, int c) {
+    if (a[b + 1][c] == 0) return false;
+    return true;
+}
+void swap(int& a, int& b) {
+    int c = a;
+    a = b;
+    b = c;
+}
+bool ktrasigle(int a, int b, int c) {
+    int arr[3] = { a,b,c };
+    for (int i = 0; i < 1; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (arr[j] == 0 || arr[i] != arr[j]) return false;
+        }
+    }
+    return true;
+}
+bool ktra(int a, int b, int c, int d, int e) {
+    int f[5] = { a,b,c,d,e };
+    for (int i = 0; i < 1; i++) {
+        for (int j = 1; j < 5; j++) {
+            if (f[j] == 0 || f[i] != f[j]) return false;
+        }
+    }
+    return true;
+}
+bool singleDisappear(int a[][18]) {
+    bool check = false;
+    for (int i = 2; i < 10; i++) {
+        for (int j = 2; j < 16; j++) {
+            if (ktrasigle(a[i][j + 1], a[i][j], a[i][j - 1])) {
+                check = true;
+                a[i][j] = 0;
+                a[i][j - 1] = 0;
+                a[i][j + 1] = 0;
+            }
+            else if (ktrasigle(a[i + 1][j], a[i - 1][j], a[i][j])) {
+                check = true;
+                a[i][j] = 0;
+                a[i + 1][j] = 0;
+                a[i - 1][j] = 0;
+            }
+        }
+    }
+    return check;
+}
+bool disappearDouble(int bitmap[][18]) {
+    bool check = false;
+    for (int i = 2; i < 10; i++) {
+        for (int j = 2; j < 16; j++) {
+            if (ktra(bitmap[i][j], bitmap[i + 1][j], bitmap[i + 2][j], bitmap[i][j + 1], bitmap[i][j + 2])) { // L goc trai
+                bitmap[i][j] = 0; bitmap[i + 1][j] = 0; bitmap[i + 2][j] = 0; bitmap[i][j + 1] = 0; bitmap[i][j + 2] = 0; check = true;
+            }
+            if (ktra(bitmap[i][j], bitmap[i - 1][j], bitmap[i - 2][j], bitmap[i][j + 1], bitmap[i][j + 2])) { // L 
+                bitmap[i][j] = 0; bitmap[i - 1][j] = 0; bitmap[i - 2][j] = 0; bitmap[i][j + 1] = 0; bitmap[i][j + 2] = 0; check = true;
+            }
+            if (ktra(bitmap[i][j], bitmap[i + 1][j], bitmap[i + 2][j], bitmap[i][j - 1], bitmap[i][j - 2])) { // L goc phai
+                bitmap[i][j] = 0; bitmap[i + 1][j] = 0; bitmap[i + 2][j] = 0; bitmap[i][j - 1] = 0; bitmap[i][j - 2] = 0;  check = true;
+            }
+            if (ktra(bitmap[i][j], bitmap[i - 1][j], bitmap[i - 2][j], bitmap[i][j - 1], bitmap[i][j - 2])) { // _| 
+                bitmap[i][j] = 0; bitmap[i - 1][j] = 0; bitmap[i - 2][j] = 0; bitmap[i][j - 1] = 0; bitmap[i][j - 2] = 0; check = true;
+            }
+            if (ktra(bitmap[i][j], bitmap[i + 1][j], bitmap[i - 1][j], bitmap[i][j + 1], bitmap[i][j - 1])) { // +
+                bitmap[i][j] = 0; bitmap[i + 1][j] = 0; bitmap[i - 1][j] = 0; bitmap[i][j + 1] = 0; bitmap[i][j - 1] = 0; check = true;
+            }
+            if (ktra(bitmap[i][j], bitmap[i + 1][j], bitmap[i - 1][j], bitmap[i][j - 1], bitmap[i][j - 2])) { // --|
+                bitmap[i][j] = 0; bitmap[i + 1][j] = 0; bitmap[i - 1][j] = 0; bitmap[i][j - 1] = 0; bitmap[i][j - 2] = 0; check = true;
+            }
+            if (ktra(bitmap[i][j], bitmap[i + 1][j], bitmap[i - 1][j], bitmap[i][j + 1], bitmap[i][j + 2])) { // |--
+                bitmap[i][j] = 0; bitmap[i + 1][j] = 0; bitmap[i - 1][j] = 0; bitmap[i][j + 1] = 0; bitmap[i][j + 2] = 0; check = true;
+            }
+            if (ktra(bitmap[i][j], bitmap[i + 1][j], bitmap[i + 2][j], bitmap[i][j + 1], bitmap[i][j - 1])) { // T
+                bitmap[i][j] = 0; bitmap[i + 1][j] = 0; bitmap[i + 2][j] = 0; bitmap[i][j + 1] = 0; bitmap[i][j - 1] = 0; check = true;
+            }
+            if (ktra(bitmap[i][j], bitmap[i - 1][j], bitmap[i - 2][j], bitmap[i][j + 1], bitmap[i][j - 1])) { // _|_
+                bitmap[i][j] = 0; bitmap[i - 1][j] = 0; bitmap[i - 2][j] = 0; bitmap[i][j + 1] = 0; bitmap[i][j - 1] = 0; check = true;
+            }
+        }
+    }
+    return check;
+}
+SDL_Texture* loadFromRenderedText(std::string textureText, SDL_Color textColor, SDL_Rect& rect)
+{
+    SDL_Surface* textSurface = TTF_RenderText_Solid(front, textureText.c_str(), textColor);
+    SDL_Texture* mTexture = NULL;
+    if (textSurface == NULL)
+    {
+        printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+    }
+    else
+    {
+        mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+        if (mTexture == NULL)
+        {
+            printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
+        }
+        rect.w = textSurface->w;
+        rect.h = textSurface->h;
+        SDL_FreeSurface(textSurface);
+    }
+    return mTexture;
+}
+bool soam(int a[][18]) {
+    for (int i = 2; i < 10; i++) {
+        for (int j = 2; j < 16; j++) {
+            if (a[i][j] < 0) return false;
+        }
+    }
+    return true;
+}
+void doimau(int a[][18], int row, int colum) {
+    for (int i = 2; i < 10; i++) {
+        for (int j = 2; j < 16; j++) {
+            if (a[i][j] < 0) {
+                if (row - i == 1 && colum == j) { if (a[i + 2][j] != 0) { a[i][j] *= -1; swap(a[i][j], a[i + 2][j]); } }
+                else if (j - colum == 1 && row == i) { if (a[i][j - 2] != 0) { a[i][j] *= -1; swap(a[i][j], a[i][j - 2]); } }
+                else if (i - row == 1 && j == colum) { if (a[i - 2][j] != 0) { a[i][j] *= -1; swap(a[i][j], a[i - 2][j]); } }
+                else if (colum - j == 1 && i == row) { if (a[i][j + 2] != 0) { a[i][j] *= -1; swap(a[i][j], a[i][j + 2]); } }
+                else if (colum - j == 1 && row - i == 1) { if (a[i + 2][j + 2] != 0) { a[i][j] *= -1; swap(a[i][j], a[i + 2][j + 2]); } }
+                else if (colum - j == 1 && i - row == 1) { if (a[i - 2][j + 2] != 0) { a[i][j] *= -1; swap(a[i][j], a[i - 2][j + 2]); } }
+                else if (j - colum == 1 && i - row == 1) { if (a[i - 2][j - 2] != 0) { a[i][j] *= -1; swap(a[i][j], a[i - 2][j - 2]); } }
+                else if (j - colum == 1 && row - i == 1) { if (a[i + 2][j - 2] != 0) { a[i][j] *= -1; swap(a[i][j], a[i + 2][j - 2]); } }
+            }
+        }
+    }
+}
+bool Menu(SDL_Event e, SDL_Rect a[], int& timeDelay) {
+    bool b = false;
+    SDL_Rect constMenu[3];
+    text[0] = loadFromRenderedText("Play", white, menuText[0]);
+    text[1] = loadFromRenderedText("Demo", white, menuText[2]);
+    text[2] = loadFromRenderedText("Exit", white, menuText[1]);
+    menuText[0].x = 400; menuText[0].y = 200;
+    menuText[1].x = 400; menuText[1].y = menuText[0].y + menuText[0].h;
+    menuText[2].x = 400; menuText[2].y = menuText[1].y + menuText[1].h;
+    constMenu[0] = menuText[0]; constMenu[1] = menuText[1]; constMenu[2] = menuText[2];
+    while (!b) {
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) {
+                b = true;
+                return false;
+            }
+            text[0] = loadFromRenderedText("Play", white, menuText[0]);
+            text[1] = loadFromRenderedText("Demo", white, menuText[2]);
+            text[2] = loadFromRenderedText("Exit", white, menuText[1]);
+            if (e.type == SDL_MOUSEMOTION) {
+                if (e.button.x > 400 && e.button.x < 400 + menuText[0].w && e.button.y > menuText[0].y && e.button.y < menuText[0].y + menuText[0].h) {
+                    text[0] = loadFromRenderedText("Play", red, menuText[0]);
+
+                }
+                if (e.button.x > 400 && e.button.x < 400 + menuText[1].w && e.button.y > menuText[1].y && e.button.y < menuText[1].y + menuText[1].h) {
+                    text[1] = loadFromRenderedText("Demo", red, menuText[1]);
+                }
+                if (e.button.x > 400 && e.button.x < 400 + menuText[2].w && e.button.y > menuText[2].y && e.button.y < menuText[2].y + menuText[2].h) {
+                    text[2] = loadFromRenderedText("Exit", red, menuText[2]);
+                }
+            }
+            else   if (e.type = SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+                if (e.button.x > 400 && e.button.x < 400 + menuText[0].w && e.button.y > menuText[0].y && e.button.y < menuText[0].y + menuText[0].h)  return true;
+                else if (e.button.x > 400 && e.button.x < 400 + menuText[2].w && e.button.y > menuText[2].y && e.button.y < menuText[2].y + menuText[2].h) return false;
+            }
+        }
+        SDL_RenderClear(gRenderer);
+        SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0);
+        SDL_RenderCopy(gRenderer, menu, NULL, NULL);
+        for (int i = 0; i < 3; i++) {
+            SDL_RenderCopy(gRenderer, text[i], NULL, &constMenu[i]);
+        }
+        SDL_RenderPresent(gRenderer);
+        timeDelay = SDL_GetTicks() / 1000;
+    }
+    return false;
+}
+int main(int argc, char* argv[]) {
+  
+    bool playagain = true;
+     do {
+         bool playagain = true;
+         bool lose = false;
+    ifstream map("map.txt");
+    if (!map) printf("can't open file map");
+    int bitmap[12][18];
+    for (int i = 0; i < 12; i++) {
+        for (int j = 0; j < 18; j++) {
+            map >> bitmap[i][j];
+        }
+    }
+    bool quit = false, renderText = false;
+    int frame = 0;
+    bool cap = true;
+    fps Fps;
+    SDL_Rect rect = { 0,50,64,64 };
+    SDL_Rect rect1 = { 0,50,64,64 };
+  
+    SDL_Rect khung = { 0,50,896,512 };
+    SDL_Rect rectAs = { SCREEN_WIDTH - 200, SCREEN_HEIGHT - 200,200,40 };
+    SDL_Rect rectTangle = { SCREEN_WIDTH - 500,SCREEN_HEIGHT / 2,200,64 };
+    SDL_Rect rTime = { 0,0,0,0 };
+    SDL_Rect rDiem = { 150,0,0,0 };
+    int diem = 0;
+    string inputText = "";
+    bool finishInput = false;
+    int time = 0; int timeDelay = 0, realTime = 0;
+    if (init() == false) return 0;
+    else {
+        if (load() == false) {
+            return 0;
+        }
+        else {
+            if (!Menu(gevent, menuText, timeDelay)) {
+                return 0;
+            }
+            else {
+
+                while (!quit) {
+                    Fps.start();
+                    SDL_StartTextInput();
+                    bool stopInput = false;
+                    while (SDL_PollEvent(&gevent) != 0) {
+                        if (gevent.type == SDL_QUIT ) {
+                            quit = true;
+                            break;
+                        }
+                        else {
+                            if (bitmap[rect1.y / 64 + 2][rect1.x / 64 + 2] != 9) {
+                                if (gevent.type == SDL_KEYDOWN) {
+                                    switch (gevent.key.keysym.sym) {
+                                    case SDLK_DOWN: if (checkMapDown(bitmap, rect1.y / 64 + 2, rect1.x / 64 + 2)) {
+                                        rect1.y = (rect1.y + 64);
+                                    } break;
+                                    case SDLK_UP: if (checkMapUp(bitmap, rect1.y / 64 + 2, rect1.x / 64 + 2)) {
+                                        rect1.y = (rect1.y - 64);
+                                    } break;
+                                    case SDLK_RIGHT: if (checkMapRight(bitmap, rect1.y / 64 + 2, rect1.x / 64 + 2)) {
+                                        rect1.x = (rect1.x + 64);
+                                    }; break;
+                                    case SDLK_LEFT:  if (checkMapLeft(bitmap, rect1.y / 64 + 2, rect1.x / 64 + 2)) {
+                                        rect1.x = (rect1.x - 64);
+                                    } break;
+                                    case SDLK_9: Mix_PlayMusic(Music, -1); break;
+                                    case SDLK_0:Mix_HaltMusic(); break;
+                                    case SDLK_b: if (soam(bitmap)) { bitmap[rect1.y / 64 + 2][rect1.x / 64 + 2] *= -1; }
+                                               break;
+                                    case SDLK_c:     if (bitmap[rect1.y / 64 + 2][rect1.x / 64 + 2] < 0) bitmap[rect1.y / 64 + 2][rect1.x / 64 + 2] *= -1; break;
+                                    case SDLK_w: doimau(bitmap, rect1.y / 64 + 2, rect1.x / 64 + 2); break;
+                                    case SDLK_RETURN: cap = (!cap); break;
+                                    default: break;
+                                    }
+                                }
+                            }
+                            else  if (bitmap[rect1.y / 64 + 2][rect1.x / 64 + 2] == 9) {
+                                if (gevent.type == SDL_KEYDOWN)
+                                {
+                                    //Handle backspace
+                                    if (gevent.key.keysym.sym == SDLK_BACKSPACE && inputText.length() > 0)
+                                    {
+                                        inputText.pop_back();
+                                        renderText = true;
+                                    }
+                                    else if (gevent.key.keysym.sym == SDLK_KP_ENTER) {
+                                        SDL_StopTextInput(); rect1.x -= 64; stopInput = true;
+                                    }
+                                }
+                                //Special text input event
+                                else if (gevent.type == SDL_TEXTINPUT)
+                                {
+                                        inputText += gevent.text.text;
+                                        renderText = true;
+                                }
+                            }
+                        }
+                    }
+                    SDL_RenderClear(gRenderer);
+                    SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0);
+                    SDL_RenderCopy(gRenderer, background, NULL, &khung);
+                    for (int i = 2; i < 10; i++) {
+                        rect.x = 0;
+                        for (int j = 2; j < 16; j++) {
+                            if (disappearDouble(bitmap)) { Mix_PlayChannel(-1, score, 0); SDL_Delay(200); Mix_PlayChannel(-1, score, 0); diem += 2; }
+                            if (singleDisappear(bitmap)) { Mix_PlayChannel(-1, score, 0); diem += 1; }
+                            if (bitmap[i][j] != 0)	render(bitmap[i][j], rect);
+                            rect.x += 64;
+                        }
+                        rect.y = rect.y + 64;
+                        if (rect.y > 512 - 64 + 50) rect.y = 50;
+                    }
+                    SDL_RenderCopy(gRenderer, gTexture, NULL, &rect1);
+                    SDL_Texture* Time = NULL;
+                    SDL_Texture* Diem = NULL;
+                    time = SDL_GetTicks() / 1000 - timeDelay;
+                    realTime = 300 - time;
+                    if (realTime <= 0) realTime = 0;
+                    string s = "Time:";
+                    string score = "Score:";
+                    stringstream bca, Score;
+                    bca << s << realTime;  bca >> s;                
+                    Score << score << diem;  Score >> score;               
+                    front = TTF_OpenFont("lazy.ttf", 30);
+                    Time = loadFromRenderedText(s, white, rTime);
+                    Diem = loadFromRenderedText(score, white, rDiem);
+                    SDL_RenderCopy(gRenderer, Diem, NULL, &rDiem);
+                    SDL_RenderCopy(gRenderer, Time, NULL, &rTime);
+                    if (renderText)
+                    {
+                        //Text is not empty
+                        if (inputText != "")
+                        {
+                            //Render new text
+                            anSwer = loadFromRenderedText(inputText.c_str(), white, rectAs);
+                        }
+                        //Text is empty
+                        else
+                        {
+                            //Render space texture
+                            anSwer = loadFromRenderedText(" ", white, rectAs);
+                        }
+                    }
+                    SDL_RenderCopy(gRenderer, anSwer, NULL, &rectAs);
+                    string dapan = "iron man";
+                    if (inputText == dapan && stopInput == true) {
+                        SDL_Rect win = { SCREEN_WIDTH / 2 - 300,SCREEN_HEIGHT / 2 - 50,0,0 };
+                        front = TTF_OpenFont("ARCADE.ttf", 150);
+                   SDL_Texture* winGame = loadFromRenderedText("YOU WIN!",white,win);
+                        SDL_RenderCopy(gRenderer, winGame, NULL, &win);
+                        quit = true;
+                       
+                    }
+                    if (realTime <= 0 || bitmap[rect1.y / 64 + 2][rect1.x / 64 + 2] == 0 ||
+                        (!checkMapDown(bitmap, rect1.y / 64 + 2, rect1.x / 64 + 2) &&
+                            !checkMapUp(bitmap, rect1.y / 64 + 2, rect1.x / 64 + 2) &&
+                            !checkMapRight(bitmap, rect1.y / 64 + 2, rect1.x / 64 + 2) &&
+                            !checkMapLeft(bitmap, rect1.y / 64 + 2, rect1.x / 64 + 2))) {
+                        Mix_Chunk* mixLose = NULL;
+                        mixLose = Mix_LoadWAV("lose.wav");
+                        Mix_PlayChannel(-1,mixLose, 0);
+                        SDL_Rect rectLose = { SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 50,0,0 };
+                        front = TTF_OpenFont("ARCADE.ttf", 150);
+                        SDL_Texture* ttLose = loadFromRenderedText("lose!", white, rectLose);
+                        SDL_RenderCopy(gRenderer, ttLose, NULL, &rectLose);
+                        quit = true; lose = true;
+                    }
+                    frame++;
+                    if ((cap == true) && (Fps.get_ticks() < 1000 / FRAMES_PER_SECOND))
+                    {
+                        //Sleep the remaining frame time
+                        SDL_Delay((1000 / FRAMES_PER_SECOND) - Fps.get_ticks());
+                    }
+                    SDL_RenderPresent(gRenderer);
+                    if (quit == true && stopInput || lose ) SDL_Delay(4000);
+                }
+            }
+        }
+    }
+    close();
+    } while (playagain);
+    return 0;
+}

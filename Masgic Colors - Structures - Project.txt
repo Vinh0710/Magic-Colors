@@ -1,0 +1,45 @@
+  ----------------------------- HƯỚNG DẪN CÀI ĐẶT CHƯƠNG TRÌNH GAME MAGIC - COLORS -------------------------------------
+
+
+** DEMO GAME: 
+  - Giải thích tên game:
+    + Game được đăt tên là 'Magic Colors' vì trong game chủ yếu là các ô màu sắc lẫn lỗn xen kẽ nhau, và người chơi sẽ 
+      phải xử lý đống ô màu khó chịu đó.
+  - Cách chơi:
+    + Game chia làm 10 level từ dễ đến khó và người chơi sẽ phải vượt qua 10 level đó trong vòng 500s để giành chiến 
+      thắng.
+    + Mỗi level sẽ có map riêng và người chơi sẽ phải làm biến mất các ô màu trong map đến khi chắc chắn đáp án là gì
+      (mỗi level có 1 bức ảnh ẩn dưới các ô màu và đó cũng chính là đáp án cần tìm)
+    + Người chơi có thể đổi vị trí 2 màu 'đối xứng' nhau qua 1 ô trung gian (chỉ có thể đổi 2 màu cách nhau 1 ô) bắng cách 
+      điều khiền nhân vật đánh dấu vị trí ô cần đổi (nhấn phím 'b'), sau khi đánh dấu thì sẽ có 1 hình đầu lâu đè lên ô 
+      đó, sau đó người chơi di chuyển nhân vật ra vị trí ô trung gian giữa 2 ô cần đổi (1 ô vừa đánh dấu và ô người chơi
+      muốn đổi) và sau đó nhấn phím 'w' thì 2 ô màu sẽ được đổi chỗ cho nhau.
+    + Khi các ô màu liên tiếp nhau và có cũng một màu thì các ô đó sẽ bị biến mất, mỗi một ô bị biến mất người chơi sẽ 
+      được cộng thêm 1 điểm.
+    + Người chơi cần ít nhất 25 điểm để mở khóa vị trí để nhập đáp án (mép phải các ô màu), số điểm sẽ được giữ qua tứng level,
+      khi điểm >25 thì cái khóa sẽ tự động mở và biến thành 1 nút màu xanh.
+    + Khi đã đoán ra được đáp án thì người chơi có thể điều khiển nhân vật chạy ra nút màu xanh để nhập đáp án, mỗi lần nhập 
+      sai đáp án thì sẽ bị trừ đi 5 điểm, nhập đúng thì sẽ qua level cao hơn.
+
+    + Các trường hợp Game Over: 1. Điểm < 0.
+                                2. Vị trí ô màu ngay sát nút nhập màu xanh bị biến mất.
+                                3. Vị trí nhân vật trùng vị trí ô màu bị biến mất (trong quá trình làm mất các ô màu).
+                                4. Thời gian chơi < 0.
+
+** CÁCH CHƯƠNG TRÌNH VẬN HÀNH:
+   - Chương trình chia làm 19 hàm (1 hàm main), và nhiều biến toàn cục (được khai báo ở đầu chương trình), mỗi biến và hàm đều có vai trò không thể thay thế
+   - Chức năng của các hàm:
+     + init(): khởi tạo cửa sổ, phông chữ và âm thanh của chương trình
+     + close(): đóng cửa sổ chương trình và hủy tất cả khởi tạo
+     + closeInitImg(): hủy khởi tạo các biến SDL_Texture*  toàn cục
+     + load(): khởi tạo các biến SDL_Texture*  , gán cho mỗi biến là 1 hình ảnh
+     + SDL_Texture* loadTexture(): trả về biến SDL_Texture*  từ biến SDL_Surface* 
+     + checkMapDown(), checkMapUp(), checkMapRight(), checkMapLeft(): kiểm tra hướng di chuyển của nhân vật
+     + swapColor(): đổi vị trí 2 ô màu với nhau
+     + ktra(): phát hiện các ô liên tiếp cùng màu
+     + MapRight(): cũng giống như hàm ktra() nhưng ở phạm vi toàn bản đồ
+     + swap(): phụ trợ cho hàm swapColor()
+     + loadFromRenderedText(): tải phông chữ
+     + checkMinusN(): kiểm tra vị trí đánh dấu trong các ô màu
+     + disappear(): làm biến mất các ô màu
+

@@ -1,0 +1,4 @@
+﻿  main.cpp
+C:\Users\VANADI\Desktop\make SDL\Make SDL Game\make SDL Game\main.cpp(139,5): warning C4551: function call missing argument list
+C:\Users\VANADI\Desktop\make SDL\Make SDL Game\make SDL Game\main.cpp(140,5): warning C4551: function call missing argument list
+  make SDL Game.vcxproj -> C:\Users\VANADI\Desktop\make SDL\Make SDL Game\Debug\make SDL Game.exe
